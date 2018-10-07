@@ -22,7 +22,7 @@ let server = http.createServer(function(req, res) {
     let headers = req.headers
     
     // get the payload if there is any
-    var decoder = new stringDecoder('utf-8')
+    let decoder = new stringDecoder('utf-8')
     let buffer = ''
     // payload gets streamed in on the data event, decoder writes/saves data to the buffer.
     req.on('data', function(data) {
@@ -31,20 +31,60 @@ let server = http.createServer(function(req, res) {
     req.on('end', function() {
         buffer += decoder.end()
         
-        // log what path the user was asking for.
-        // console.log('Request received on path: ' + trimmedPath
-        // + ', with this method: ' + method 
-        // + ', with these query string parameters: ' + queryStringObject)
+        // choose the handler the request should go to
+        let chosenHandler = typeof(router[trimmedPath] !== 'undefined') ? router[trimmedPath] : handlers.notFound
 
-        console.log('Request received with this payload', buffer)
+        //construct the data object to send to the handler
+        let data = {
+            'trimmedPath': trimmedPath,
+            'queryStringObject' : queryStringObject,
+            'method' : method,
+            'headers' : headers,
+            'payload' : buffer
+        }
 
-        // send the response.
-        res.end('Hello World\n')
+        // route the request to the handler specified in the router
+        chosenHandler(data, function(statusCode, payload) {
+            // use the status code called back by the handler
+            statusCode = typeof(statusCode) === 'number' ? statusCode : 200
+
+            // use the payload called back by the handler, or default to an empty object
+            payload = typeof(payload) === 'object' ? payload : {}
+
+            // convert the payload to a string, cannot send user the object duh
+            let payloadString = JSON.stringify(payload)
+
+            // return the response
+            res.writeHead(statusCode)
+            res.end(payloadString)
+
+            console.log('Request this response', statusCode, payloadString)
+        })
     })
 })
 
+let port = '3000'
+
 // start server, have it listen on port 3000
-server.listen(3001, function() {
-    console.log("The serve is listening on port 3001 now")
+server.listen(port, function() {
+    console.log('The serve is listening on port ' + port + ' now')
 })
 
+// define the handlers
+let handlers = {}
+
+// sample handler
+handlers.sample = function(data, callback) {
+    // callback a http status code, and a payload object
+    callback(406, {'name' : 'sample handler'})
+}
+
+// not found handler
+handlers.notFound = function(data, callback) {
+    callback(404)
+}
+
+// define a request router
+let router = {
+    'sample' : handlers.sample
+}
