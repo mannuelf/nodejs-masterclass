@@ -3,6 +3,7 @@
 const http = require('http')
 const url = require('url')
 const stringDecoder = require('string_decoder').StringDecoder
+const config = require('./config')
 
 let server = http.createServer(function(req, res) {
     // get url and parse it.
@@ -34,7 +35,7 @@ let server = http.createServer(function(req, res) {
         // choose the handler the request should go to
         let chosenHandler = typeof(router[trimmedPath] !== 'undefined') ? router[trimmedPath] : handlers.notFound
 
-        //construct the data object to send to the handler
+        // construct the data object to send to the handler
         let data = {
             'trimmedPath': trimmedPath,
             'queryStringObject' : queryStringObject,
@@ -55,6 +56,7 @@ let server = http.createServer(function(req, res) {
             let payloadString = JSON.stringify(payload)
 
             // return the response
+            res.setHeader('Content-Type', 'application/json')
             res.writeHead(statusCode)
             res.end(payloadString)
 
@@ -63,11 +65,11 @@ let server = http.createServer(function(req, res) {
     })
 })
 
-let port = '3000'
+let port = config.port
 
 // start server, have it listen on port 3000
 server.listen(port, function() {
-    console.log('The serve is listening on port ' + port + ' now')
+    console.log('The serve is listening on port ' + port + ' in ' + config.envName + ' mode')
 })
 
 // define the handlers
