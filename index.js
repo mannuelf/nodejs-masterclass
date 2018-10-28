@@ -12,7 +12,7 @@ let httpServer = http.createServer(function(req, res) {
   unifiedServer(req, res)
 })
 
-// start server, have it listen on port 3000
+// start server, have it listen on a non HTTPS port
 httpServer.listen(config.httpPort, function() {
     console.log('The server is listening on port ' + config.httpPort + ' in ' + config.envName + ' mode.')
 })
@@ -29,7 +29,7 @@ let httpsServer = https.createServer(httpsServerOptions, function() {
 
 // Start the HTTPS Server
 httpsServer.listen(config.httpsPort, function() {
-    console.log('The server is listenining on port ' + config.httpPort + ' in ' + config.envName + ' mode.')
+    console.log('The server is listening on port ' + config.httpsPort + ' in ' + config.envName + ' mode.')
 })
 
 
