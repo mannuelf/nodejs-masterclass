@@ -1,18 +1,61 @@
 
 // Primary file for the API
 const http = require('http')
+const https = require('https')
 const url = require('url')
 const stringDecoder = require('string_decoder').StringDecoder
 const config = require('./config')
+const fs = require('fs')
 
-let server = http.createServer(function(req, res) {
+// Instantiate the HTTP Server
+let httpServer = http.createServer(function(req, res) {
+  unifiedServer(req, res)
+})
+
+// start server, have it listen on port 3000
+httpServer.listen(config.httpPort, function() {
+    console.log('The server is listening on port ' + config.httpPort + ' in ' + config.envName + ' mode.')
+})
+
+// Instantiate the HTTPS server
+let httpsServerOptions = {
+    'key': fs.readFileSync('./https/key.pem'),
+    'cert': fs.readFileSync('./https/cert.pem') 
+}
+
+let httpsServer = https.createServer(httpsServerOptions, function() {
+    unifiedServer(req, res)
+})
+
+// Start the HTTPS Server
+httpsServer.listen(config.httpsPort, function() {
+    console.log('The server is listenining on port ' + config.httpPort + ' in ' + config.envName + ' mode.')
+})
+
+
+// define the handlers
+let handlers = {}
+
+// sample handler
+handlers.sample = function(data, callback) {
+    // callback a http status code, and a payload object
+    callback(406, {'name' : 'sample handler'})
+}
+
+// not found handler
+handlers.notFound = function(data, callback) {
+    callback(404)
+}
+
+// All server logic for both http and https server
+let unifiedServer = function(req, res) {
     // get url and parse it.
     let parsedUrl = url.parse(req.url, true)
 
     // get the path from url. 
     let path = parsedUrl.pathname
     let trimmedPath = path.replace(/^\/+|\/+$/g, '')
-    
+
     // get the query string from the object
     let queryStringObject = parsedUrl.query
 
@@ -21,7 +64,7 @@ let server = http.createServer(function(req, res) {
 
     // get the header as an object
     let headers = req.headers
-    
+
     // get the payload if there is any
     let decoder = new stringDecoder('utf-8')
     let buffer = ''
@@ -62,28 +105,7 @@ let server = http.createServer(function(req, res) {
 
             console.log('Request this response', statusCode, payloadString)
         })
-    })
-})
-
-let port = config.port
-
-// start server, have it listen on port 3000
-server.listen(port, function() {
-    console.log('The serve is listening on port ' + port + ' in ' + config.envName + ' mode')
-})
-
-// define the handlers
-let handlers = {}
-
-// sample handler
-handlers.sample = function(data, callback) {
-    // callback a http status code, and a payload object
-    callback(406, {'name' : 'sample handler'})
-}
-
-// not found handler
-handlers.notFound = function(data, callback) {
-    callback(404)
+    })  
 }
 
 // define a request router
